@@ -8,3 +8,4 @@ logs/
 *.log
 models/*.pt
 config.local.json
+user_data/

@@ -1,9 +1,11 @@
 {
   "endpoint": "opc.tcp://127.0.0.1:49320",
-  "timeout_seconds": 10,
+  "timeout_seconds": 3,
   "max_frame_age": 2,
   "stable_frames": 5,
+  "result_pulse_seconds": 1.0,
   "decision_confidence": 0.8,
+  "vision3_lamp_on_delay_seconds": 0.0,
   "stations": [
     {
       "id": 1,
@@ -12,11 +14,8 @@
       "camera": 0,
       "camera_path": "",
       "model": "models/vision1_best.pt",
-      "focus": 100,
-      "exposure": -5,
-      "autofocus": false,
-      "auto_exposure": false,
-      "auto_white_balance": true,
+      "focus": 20,
+      "exposure": -9,
       "classes": {
         "lamp_edge_01": "edge",
         "lamp_round_02": "round",
@@ -34,7 +33,20 @@
       "format": "MJPG",
       "resolution": "640x480",
       "fps": 15,
-      "backend": "DSHOW"
+      "backend": "DSHOW",
+      "inspection_roi": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "roi_min_overlap": 0.7,
+      "object_rois": {},
+      "object_roi_min_overlap": 0.25,
+      "show_object_rois": false,
+      "autofocus": false,
+      "auto_exposure": false,
+      "auto_white_balance": false
     },
     {
       "id": 2,
@@ -44,16 +56,28 @@
       "camera_path": "",
       "model": "models/vision2_best.pt",
       "focus": 100,
-      "exposure": -5,
-      "autofocus": false,
-      "auto_exposure": false,
-      "auto_white_balance": true,
+      "exposure": -9,
       "classes": {
         "seat_color_01": "cocoa",
         "seat_color_02": "dark",
         "seat_cocoa": "cocoa",
-        "seat_dark_brown": "dark"
+        "seat_dark_brown": "dark",
+        "Gloss/Standard": "cocoa",
+        "Matte Brown": "dark",
+        "car seat": "seat_unknown"
       },
+      "seat_color_calibration": {
+        "cocoa_lab": null,
+        "dark_lab": null,
+        "min_separation": 0.1,
+        "max_distance": 55.0,
+        "sample_method": 2
+      },
+      "seat_color_min_saturation": 18,
+      "seat_color_min_value": 18,
+      "seat_color_max_value": 235,
+      "seat_color_score_fraction": 0.6,
+      "seat_color_force_nearest": true,
       "tags": {
         "start": "ns=2;s=M.PLC.VISION_I/O.VISION2_START",
         "running": "ns=2;s=M.PLC.VISION_I/O.VISION2_RUNNING",
@@ -65,7 +89,21 @@
       "format": "MJPG",
       "resolution": "640x480",
       "fps": 15,
-      "backend": "DSHOW"
+      "backend": "DSHOW",
+      "autofocus": false,
+      "auto_exposure": false,
+      "auto_white_balance": false,
+      "white_balance": 4500,
+      "inspection_roi": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "roi_min_overlap": 0.7,
+      "object_rois": {},
+      "object_roi_min_overlap": 0.25,
+      "show_object_rois": false
     },
     {
       "id": 3,
@@ -74,16 +112,56 @@
       "camera": 2,
       "camera_path": "",
       "model": "models/vision3_best.pt",
-      "focus": 100,
-      "exposure": -5,
-      "autofocus": false,
-      "auto_exposure": false,
-      "auto_white_balance": true,
+      "focus": 25,
+      "exposure": -8,
       "classes": {
         "seat_color_01": "cocoa",
         "seat_color_02": "dark",
-        "lamp_edge_01": "edge",
-        "lamp_round_02": "round"
+        "seat_cocoa": "cocoa",
+        "seat_dark": "dark",
+        "Gloss/Standard": "cocoa",
+        "Matte Brown": "dark",
+        "lamp_on": "lamp_on",
+        "lamp_light_on": "lamp_on",
+        "car body": "body",
+        "car seat": "seat_unknown",
+        "car lamp_A": "lamp_candidate",
+        "car lamp_R": "lamp_candidate"
+      },
+      "seat_color_calibration": {
+        "cocoa_lab": null,
+        "dark_lab": null,
+        "min_separation": 0.1,
+        "max_distance": 55.0
+      },
+      "led_on_brightness_threshold": 210.0,
+      "led_brightness_percentile": 90.0,
+      "decision_confidence": 0.6,
+      "nms_iou": 0.55,
+      "stable_frames": 5,
+      "v3_roi_crop_padding": 0.08,
+      "v3_seat_detection_min_overlap": 0.6,
+      "object_rois": {},
+      "object_roi_min_overlap": 0.2,
+      "show_object_rois": true,
+      "v3_color_presence": {
+        "seat1_min_ratio": 0.3,
+        "seat2_min_ratio": 0.3,
+        "color_tolerance": 35.0,
+        "lightness_weight": 0.35,
+        "gray_margin": 4.0,
+        "references": {
+          "seat1": {
+            "cocoa_lab": null,
+            "dark_lab": null,
+            "gray_lab": null
+          },
+          "seat2": {
+            "cocoa_lab": null,
+            "dark_lab": null,
+            "gray_lab": null
+          }
+        }
       },
       "tags": {
         "start": "ns=2;s=M.PLC.VISION_I/O.VISION3_START",
@@ -96,7 +174,18 @@
       "format": "MJPG",
       "resolution": "640x480",
       "fps": 15,
-      "backend": "DSHOW"
+      "backend": "DSHOW",
+      "autofocus": false,
+      "auto_exposure": false,
+      "auto_white_balance": false,
+      "white_balance": 4500,
+      "inspection_roi": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "roi_min_overlap": 0.7
     },
     {
       "id": 4,
@@ -105,12 +194,27 @@
       "camera": 3,
       "camera_path": "",
       "model": "models/vision4_best.pt",
-      "focus": 100,
-      "exposure": -5,
-      "autofocus": false,
-      "auto_exposure": false,
-      "auto_white_balance": true,
-      "classes": {},
+      "focus": 25,
+      "exposure": -11,
+      "classes": {
+        "seat_cocoa": "cocoa",
+        "seat_dark": "dark",
+        "Gloss/Standard": "cocoa",
+        "Matte Brown": "dark",
+        "lamp_round": "round",
+        "lamp_edge": "edge",
+        "car lamp_R": "round",
+        "car lamp_A": "edge",
+        "car body": "body",
+        "car seat": "seat_unknown"
+      },
+      "seat_color_calibration": {
+        "cocoa_lab": null,
+        "dark_lab": null,
+        "min_separation": 0.1,
+        "max_distance": 55.0,
+        "sample_method": 2
+      },
       "tags": {
         "start": "ns=2;s=M.PLC.VISION_I/O.VISION4_START",
         "running": "ns=2;s=M.PLC.VISION_I/O.VISION4_RUNNING",
@@ -122,7 +226,21 @@
       "format": "MJPG",
       "resolution": "640x480",
       "fps": 15,
-      "backend": "DSHOW"
+      "backend": "DSHOW",
+      "autofocus": false,
+      "auto_exposure": false,
+      "auto_white_balance": false,
+      "white_balance": 4500,
+      "inspection_roi": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "roi_min_overlap": 0.7,
+      "object_rois": {},
+      "object_roi_min_overlap": 0.25,
+      "show_object_rois": false
     }
   ]
 }

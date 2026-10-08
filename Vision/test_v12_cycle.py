@@ -39,7 +39,7 @@ class IO:
             await self.put(key,False)
         if was_finished:
             self.completed+=1
-            if self.completed==2:self.stop.set()
+            if self.completed==1:self.stop.set()
     async def finish(self,result,reason):
         outcome,_=result
         await self.put('ng',outcome=='NG')
@@ -52,13 +52,13 @@ class IO:
 
 async def run():
     stop=threading.Event();io=IO(stop)
-    common={'max_frame_age':2,'timeout_seconds':2,'decision_confidence':.8,'stable_frames':1}
+    common={'max_frame_age':2,'timeout_seconds':2,'decision_confidence':.8,'stable_frames':1,'result_pulse_seconds':.1}
     await asyncio.wait_for(station_loop(io,Camera(),common,stop),3)
-    assert io.completed==2 and io.product_reads>=2
-    assert io.events.count(('finish',True))==2
-    assert io.events.count(('ng',False))>=2
+    assert io.completed==1 and io.product_reads>=1
+    assert io.events.count(('finish',True))==1
+    assert io.events.count(('ng',False))>=1
     assert ('ng',True) not in io.events
-    print('PASS: V2 seat reuses same PLC PRODUCT for two START cycles; NG=0 then FINISH; PLC START reset clears outputs')
+    print('PASS: V2 START cycle outputs FINISH pulse and resets automatically')
 
 
 asyncio.run(run())

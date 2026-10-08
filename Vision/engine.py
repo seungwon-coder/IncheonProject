@@ -21,21 +21,19 @@ def order_parts(code):
 
 
 # 사용자가 확인한 클래스만 연결합니다. 번호와 무관하게 이름으로 판정합니다.
-DEFAULT_V4 = {'car body':6, 'car lamp_A':3, 'car lamp_R':2,
-              'Gloss/Standard':4, 'Matte Brown':5, 'car seat':'seat_unknown'}
+V4_CODE = {'round':2, 'edge':3, 'cocoa':4, 'dark':5, 'body':6}
 
 ALIASES = {'lamp_edge_01':'edge', 'lamp_round_02':'round',
            'lamp_edge':'edge', 'lamp_round':'round',
            'seat_color_01':'cocoa', 'seat_color_02':'dark',
            'seat_cocoa':'cocoa', 'seat_dark_brown':'dark',
            'car lamp_A':'edge', 'car lamp_R':'round',
+           'lamp_on':'lamp_on', 'lamp_light_on':'lamp_on', 'lamp_led_on':'lamp_on',
            'Matte Brown':'dark', 'Gloss/Standard':'cocoa',
            'car body':'body', 'car seat':'seat_unknown'}
 
 def class_mapping(station):
-    if station['id']==4:
-        return {**DEFAULT_V4, **station.get('classes',{})}
-    return {**ALIASES, **station['classes']}
+    return {**ALIASES, **station.get('classes',{})}
 
 
 def inspection_role(station):
@@ -51,8 +49,8 @@ def relevant_values(station):
     return {
         'seat':{'cocoa','dark','seat_unknown'},
         'lamp':{'edge','round'},
-        'assembly':{'edge','round','cocoa','dark','seat_unknown'},
-        'sort':{2,3,4,5,6,'seat_unknown'},
+        'assembly':{'cocoa','dark','seat_unknown','lamp_on','lamp_off'},
+        'sort':{'round','edge','cocoa','dark','body','seat_unknown'},
     }[inspection_role(station)]
 
 def validate_model(station, task, names):
@@ -60,30 +58,30 @@ def validate_model(station, task, names):
     mapping=class_mapping(station)
     if task!='detect':
         raise ValueError('객체 검출 모델이 필요합니다. 분류 모델은 별도 연결이 필요합니다.')
-    unknown=names-set(mapping)
-    if unknown:
-        raise ValueError(f'미등록 클래스: {sorted(unknown)}; 태그 / 클래스 설정에서 확인하세요')
-    if inspection_role(station)=='sort':
-        if not ({mapping[n] for n in names} & {2,3,4,5,6,'seat_unknown'}):
-            raise ValueError('비전4에서 사용할 수 있는 클래스가 없습니다')
-        return
-    required=relevant_values(station)
-    if not ({mapping[n] for n in names}&required):
-        raise ValueError('이 비전 검사에 필요한 클래스가 모델에 없습니다')
+    values={mapping.get(name,'unknown') for name in names}
+    required={
+        'lamp':{'round','edge'},
+        'seat':{'cocoa','dark'},
+        'assembly':{'cocoa','dark','lamp_on'},
+        'sort':{'round','edge','cocoa','dark','body'},
+    }[inspection_role(station)]
+    missing=required-values
+    if missing:
+        raise ValueError(f'모델 필수 클래스 부족: {sorted(missing)}; 현재 클래스: {sorted(names)}')
 
 
 def decide(station, detections, order, threshold):
     # 비전별 검사 대상만 판정합니다. 차체는 화면 표시만 하며 베이스로 추정하지 않습니다.
     n=station['id'];role=inspection_role(station)
     mapping=class_mapping(station)
-    # 비전4 코드1은 빈 지그입니다. 연속된 새 추론 프레임의 비검출로 확정합니다.
+    # V13.11부터 비전4 빈 지그/미검출은 분류 코드가 아니라 ERROR입니다.
     if role=='sort' and not detections:
-        return ('OK',1)
+        return None
     if any(d['name'] not in mapping for d in detections):return None
     if role!='sort':
         relevant=relevant_values(station)
         detections=[d for d in detections if mapping[d['name']] in relevant]
-        if any(mapping[d['name']]=='seat_unknown' for d in detections):return None
+        if role=='seat' and any(mapping[d['name']]=='seat_unknown' for d in detections):return None
     # 검출 없음은 빈지그가 아닙니다. 불확실한 검출은 ERROR로 종료할 때까지 대기합니다.
     if not detections or any(d['score'] < threshold for d in detections):
         return None
@@ -93,9 +91,9 @@ def decide(station, detections, order, threshold):
     values = [mapping[d['name']] for d in detections]
     n = station['id']
     if role == 'sort':
-        if len(values) != 1 or type(values[0]) is not int or values[0] not in range(1,7):
+        if len(values) != 1 or values[0] not in V4_CODE:
             return None
-        return ('OK', values[0])
+        return ('OK', V4_CODE[values[0]])
     color, lamp, count = order_parts(order)
     if role in ('seat','lamp'):
         if len(values) != 1:
@@ -103,9 +101,10 @@ def decide(station, detections, order, threshold):
         expected=color if role=='seat' else lamp
         return ('OK' if values[0] == expected else 'NG', 0)
     c = Counter(values)
-    if c['edge'] + c['round'] > 1 or c['cocoa'] + c['dark'] > 2:
-        return None
-    return ('OK' if c == Counter({color: count, lamp: 1}) else 'NG', 0)
+    seats=c['cocoa']+c['dark']+c['seat_unknown']
+    # 비전3은 주문별 시트 수량과 LED ON 두 조건만 판정합니다.
+    ok=seats==count and c['lamp_on']==1
+    return ('OK' if ok else 'NG', 0)
 
 
 class Camera:
@@ -143,7 +142,9 @@ class Camera:
                 ok, frame = cap.read()
                 if not ok: raise RuntimeError('카메라 읽기 실패')
                 captured = time.monotonic()
-                r = model.predict(frame, conf=.25, imgsz=640, device='cpu', verbose=False)[0]
+                r = model.predict(frame, conf=float(s.get('display_confidence',.25)),
+                                  iou=float(s.get('nms_iou',.70)), imgsz=int(s.get('imgsz',640)),
+                                  device=s.get('device','cpu'), verbose=False)[0]
                 detections = [{'name':model.names[int(c)],'score':float(score),'box':box}
                               for c,score,box in zip(r.boxes.cls.cpu().tolist(),r.boxes.conf.cpu().tolist(),r.boxes.xyxy.cpu().tolist())]
                 seq += 1
@@ -173,7 +174,7 @@ class IO:
                 if key in ('product','result') and typ not in (ua.VariantType.Int16,ua.VariantType.UInt16,ua.VariantType.Int32,ua.VariantType.UInt32):
                     raise ValueError(f'{key}: 지원하는 정수 자료형이 아님')
                 await self.read(key)
-                if key not in ('start','product'):
+                if key not in ('start','product','discharge_complete'):
                     access=await node.get_user_access_level()
                     if self.write and ua.AccessLevel.CurrentWrite not in access:
                         raise ValueError(f'{key}: 쓰기 권한 없음')
@@ -195,22 +196,28 @@ class IO:
     async def reset(self):
         # 완료를 먼저 내리고 나머지를 초기화. START/주문은 절대 쓰지 않습니다.
         for key in ('finish','running','ng','error'): await self.put(key,False)
-        if self.config['id']==4: await self.put('result',0)
+        # 비전4 CLASS_RESULT는 PLC가 초기화합니다. JIG_Dispose는 사용하지 않습니다.
 
     async def finish(self,result,reason):
         outcome,code=result
-        if self.config['id']==4: await self.put('result',code if outcome=='OK' else 0)
-        await self.put('ng',outcome=='NG')
-        await self.put('error',outcome=='ERROR')
         await self.put('running',False)
-        # FINISH를 마지막에 올립니다. PLC는 FINISH 이후 결과를 읽어야 합니다.
-        await self.put('finish',True)
+        await self.put('finish',False);await self.put('ng',False);await self.put('error',False)
+        if self.config['id']==4:
+            valid_part=outcome=='OK' and code in (2,3,4,5,6)
+            await self.put('result',code if valid_part else 0)
+            if valid_part:await self.put('finish',True)
+            else:await self.put('error',True)
+        else:
+            if outcome=='OK':await self.put('finish',True)
+            elif outcome=='NG':await self.put('ng',True)
+            else:await self.put('error',True)
         self.status=f'{outcome}: {reason}'
         self.logger(self.config['id'],'complete',{'outcome':outcome,'code':code,'reason':reason})
 
 
 async def station_loop(io, camera, common, stop):
     try:
+        result_pulse=max(0.1,float(common.get('result_pulse_seconds',1.0)))
         await io.prepare()
         ready_deadline=time.monotonic()+60
         while not stop.is_set():
@@ -232,6 +239,7 @@ async def station_loop(io, camera, common, stop):
             while not stop.is_set() and not await io.read('start'): await asyncio.sleep(.1)
             if stop.is_set(): return
             started=time.monotonic();order=None
+            lamp_on_delay=float(common.get('vision3_lamp_on_delay_seconds',2.0))
             await io.reset(); await io.put('running',True)
             io.status='RUNNING'
             result=None;reason='안정된 검출 없음/시간 초과';signature=None;streak=0;last_seq=-1
@@ -244,15 +252,20 @@ async def station_loop(io, camera, common, stop):
                     result=('ERROR',0);reason='검사 중 START 조기 OFF';break
                 if io.config['id']!=4 and await io.read('product')!=order:
                     result=('ERROR',0);reason='검사 중 주문 변경';break
+                if inspection_role(io.config)=='assembly' and time.monotonic()<started+lamp_on_delay:
+                    io.status='RUNNING: 램프 점등 대기'
+                    await asyncio.sleep(.05);continue
                 packet,error=camera.get()
                 if not packet or time.monotonic()-packet[1]>common['max_frame_age']:
                     streak=0;signature=None
                 if error: result=('ERROR',0);reason=error;break
                 if packet:
                     seq,captured,_,det=packet
-                    if captured>=started and time.monotonic()-captured<=common['max_frame_age'] and seq!=last_seq:
+                    valid_after=started+lamp_on_delay if inspection_role(io.config)=='assembly' else started
+                    if captured>=valid_after and time.monotonic()-captured<=common['max_frame_age'] and seq!=last_seq:
                         last_seq=seq
-                        candidate=decide(io.config,det,order,common['decision_confidence'])
+                        threshold=float(io.config.get('decision_confidence',common['decision_confidence']))
+                        candidate=decide(io.config,det,order,threshold)
                         sig=(candidate,tuple(sorted(d['name'] for d in det))) if candidate else None
                         streak=streak+1 if sig and sig==signature else (1 if sig else 0)
                         signature=sig
@@ -267,9 +280,15 @@ async def station_loop(io, camera, common, stop):
             if io.config['id']!=4 and await io.read('product')!=order:
                 result=('ERROR',0);reason='완료 직전 주문 변경'
             await io.finish(result,reason)
-            # 결과를 유지하여 PLC가 읽을 시간을 보장합니다. START OFF가 확인 응답입니다.
-            while not stop.is_set() and await io.read('start'): await asyncio.sleep(.1)
-            if not stop.is_set(): await io.reset()
+            pulse_until=time.monotonic()+result_pulse
+            while not stop.is_set() and time.monotonic()<pulse_until:
+                io.status=f'COMPLETE: 결과 출력 {max(0.0,pulse_until-time.monotonic()):.1f}초'
+                await asyncio.sleep(min(.1,max(.01,pulse_until-time.monotonic())))
+            if stop.is_set():return
+            await io.reset()
+            while not stop.is_set() and await io.read('start'):
+                io.status='WAIT: START OFF'
+                await asyncio.sleep(.1)
     except Exception as e:
         io.status=f'BLOCKED: {e}'
         io.logger(io.config['id'],'blocked',{'error':str(e)})
@@ -313,7 +332,8 @@ async def main(args):
                     age=0 if not packet else time.monotonic()-packet[1]
                     if packet and age<=cfg['max_frame_age']:
                         for d in packet[3]:
-                            x1,y1,x2,y2=map(int,d['box']);color=(0,180,255) if d['score']<cfg['decision_confidence'] else (0,255,0)
+                            threshold=float(io.config.get('decision_confidence',cfg['decision_confidence']))
+                            x1,y1,x2,y2=map(int,d['box']);color=(0,180,255) if d['score']<threshold else (0,255,0)
                             cv2.rectangle(frame,(x1,y1),(x2,y2),color,2)
                             cv2.putText(frame,f"{d['name']} {d['score']:.2f}",(x1,max(15,y1)),cv2.FONT_HERSHEY_SIMPLEX,.45,color,1)
                     if not packet or age>cfg['max_frame_age'] or error:

@@ -13,6 +13,11 @@ class OpcController:
         self.logger, self.client_factory = logger, client_factory
         self.client = None
         self.tasks = []
+        self.cycle_tasks = []
+        self.reconnect_task = None
+        self.desired_connected = False
+        self.desired_endpoint = config['endpoint']
+        self.desired_write = False
         self.lock = threading.Lock()
         self.info = dict(connected=False, busy=False, write_enabled=False,
                          endpoint=config['endpoint'], error='', status='미연결')
@@ -39,6 +44,11 @@ class OpcController:
                 raise ValueError('opc.tcp://IP:포트 형식으로 입력하세요')
             if write and data.get('confirmed') is not True:
                 raise ValueError('카메라·모델·태그·PLC 확인 후 쓰기 운전을 확인하세요')
+            self.desired_connected = True
+            self.desired_endpoint = endpoint
+            self.desired_write = write
+        else:
+            self.desired_connected = False
         with self.lock:
             if self.info['busy']:
                 raise ValueError('OPC 명령 처리 중입니다. 완료 후 다시 시도하세요')
@@ -52,6 +62,7 @@ class OpcController:
             task.cancel()
         await asyncio.gather(*self.tasks, return_exceptions=True)
         self.tasks.clear()
+        self.cycle_tasks.clear()
         client, self.client = self.client, None
         self.renderer.write_enabled = False
         self.update(connected=False, write_enabled=False)
@@ -83,6 +94,7 @@ class OpcController:
                         status='연결됨 / 실제 쓰기' if write else '연결됨 / 읽기 시험')
             self.tasks = [asyncio.create_task(self.cycle(io, self.cameras[io.station['id']],
                                                        self.config, self.stop)) for io in ios]
+            self.cycle_tasks = list(self.tasks)
             self.tasks.append(asyncio.create_task(self.monitor(ios[0])))
         except asyncio.CancelledError:
             raise
@@ -92,24 +104,60 @@ class OpcController:
             except Exception:
                 pass
             self.update(status='연결 실패', error=f'{type(exc).__name__}: {exc}')
+            if action == 'connect' and self.desired_connected:
+                self.schedule_reconnect()
         finally:
             self.update(busy=False)
+
+    def schedule_reconnect(self):
+        if self.stop.is_set() or not self.desired_connected:
+            return
+        if self.reconnect_task is None or self.reconnect_task.done():
+            self.reconnect_task = asyncio.create_task(self.auto_reconnect())
+
+    async def auto_reconnect(self):
+        while self.desired_connected and not self.stop.is_set():
+            self.update(status='통신 복구 대기', error='3초 후 OPC 자동 재연결')
+            await asyncio.sleep(3)
+            if not self.desired_connected or self.stop.is_set():
+                return
+            await self.execute('connect', self.desired_endpoint, self.desired_write)
+            if self.snapshot()['connected']:
+                return
 
     async def monitor(self, io):
         try:
             while not self.stop.is_set():
                 await asyncio.sleep(1)
                 await io.read('start')
+                if any(task.done() for task in self.cycle_tasks):
+                    raise RuntimeError('비전 검사 작업이 예기치 않게 종료됨')
         except asyncio.CancelledError:
             raise
         except Exception as exc:
-            self.tasks.remove(asyncio.current_task())
-            try:
-                await self.disconnect()
-            finally:
-                self.update(status='통신 끊김', error=str(exc))
+            self.update(connected=False, write_enabled=False,
+                        status='통신 끊김 / 자동 재연결', error=str(exc))
+            self.renderer.write_enabled = False
+            current = asyncio.current_task()
+            for task in self.cycle_tasks:
+                if not task.done():
+                    task.cancel()
+            await asyncio.gather(*self.cycle_tasks, return_exceptions=True)
+            self.cycle_tasks.clear()
+            self.tasks = [task for task in self.tasks if task is not current and not task.done()]
+            client, self.client = self.client, None
+            if client:
+                try:
+                    await client.disconnect()
+                except Exception:
+                    pass
+            self.schedule_reconnect()
 
     async def shutdown(self):
+        self.desired_connected = False
+        if self.reconnect_task and not self.reconnect_task.done():
+            self.reconnect_task.cancel()
+            await asyncio.gather(self.reconnect_task, return_exceptions=True)
         if self.command_future and not self.command_future.done():
             self.command_future.cancel()
             await asyncio.gather(asyncio.wrap_future(self.command_future), return_exceptions=True)

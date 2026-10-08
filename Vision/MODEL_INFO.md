@@ -1,11 +1,9 @@
-# 사용 모델 안내
+# 모델 파일 대조 결과
 
-사용자가 실제 사용 모델로 지정한 파일: `best.pt` (train-v15-best/weights).
-- 파일 크기: 5,472,787 bytes
-- SHA256: `1e26e2513a894c812bbf188bbfd827bc9304640054e87c708b6d75b832ee4576`
-- 학습 설정 기록: YOLO11n 객체 검출, 50 epochs, imgsz 640
-- 데이터셋 설정의 클래스: car body, car lamp_A, car lamp_R, car seat
+V13.29 폴더의 vision1_best.pt, vision2_best.pt, vision3_best.pt, vision4_best.pt는 SHA256이 모두 같으며 사용자가 실제 사용 모델로 지정한 train-v15-best/weights/best.pt와도 동일합니다.
 
-이 기록은 파일과 학습 설정을 확인한 결과입니다. 가중치를 로드해 추론 성능을 재검증하거나 V1~V4 모두에 동일 모델이 사용됐음을 확인한 것은 아닙니다. V13.10 설정은 비전별 모델 4개를 참조하므로 각 역할의 모델 및 클래스 매핑을 별도로 확인해야 합니다. V2 색상 판정에 필요한 클래스 지원도 별도 확인이 필요합니다.
+SHA256: `1e26e2513a894c812bbf188bbfd827bc9304640054e87c708b6d75b832ee4576`
 
-모델 바이너리, 전체 데이터셋, 현장 설정은 이번 코드 공개본에 포함하지 않습니다. `best.pt`의 내부 메타데이터와 모델 재배포 조건은 별도로 확인해야 합니다.
+원본 MODEL_APPLIED.txt의 기록: 사용자 제공 best(2).pt, detect, 클래스 car body / car lamp_A / car lamp_R / car seat. 이 모델 자체는 시트 색상 종류를 구분하지 않으며 V2·V4의 색상 처리는 Python/OpenCV가 보완합니다. 최신 V3의 시트 유무는 ROI 픽셀 비율을 사용합니다.
+
+모델의 동일성은 해시로 확인했습니다. 가중치 추론 성능과 현장 적용 결과를 이번 작업에서 재검증한 것은 아닙니다. 모델 바이너리는 이번 공개본에서 제외합니다. 과거 models/README_KO.txt의 V1/V2 역할이 뒤바뀐 안내는 그대로 복사하지 않았습니다.

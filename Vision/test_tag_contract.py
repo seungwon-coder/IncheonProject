@@ -14,6 +14,7 @@ for vision,tags in expected.items():
     for key,name in tags.items():assert stations[vision]['tags'][key].endswith(name)
 for vision in (1,2,3):assert stations[vision]['tags']['product']!=stations[vision]['tags']['start']
 assert stations[4]['tags']['result']!=stations[4]['tags']['start']
+assert 'discharge_complete' not in stations[4]['tags']
 assert stations[1]['inspection']=='lamp' and stations[2]['inspection']=='seat'
 assert 'result' not in stations[1]['tags'] and 'result' not in stations[2]['tags']
-print('PASS: actual V1-V4 tags, V1 lamp/V2 seat roles, V1/V2 binary NG without extra CLASS_RESULT')
+print('PASS: actual V1-V4 tags; V4 ignores JIG_Dispose and PLC resets CLASS_RESULT')

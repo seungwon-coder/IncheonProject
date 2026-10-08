@@ -1,4 +1,4 @@
-"""V13.8 유지보수 제어판. 카메라 배정과 영상 설정을 한 화면에서 관리합니다."""
+"""V13.29 비전3 시트 색상 유무 판정 제어판."""
 import io
 import os
 import sys
@@ -19,11 +19,11 @@ from ui_tasks import UiTasks
 class Panel:
     def __init__(self, root):
         self.jobs=UiTasks()
-        self.root=root;root.title("PV5 V13.8 유지보수 제어판")
+        self.root=root;root.title("PV5 V13.29 비전3 시트 색상 유무 제어판")
         self.base=tk.StringVar(value="http://127.0.0.1:5000")
         root.geometry("1280x850")
-        self.display_mode=tk.StringVar(value="작은 글씨")
-        self.stream_mode="small"
+        self.display_mode=tk.StringVar(value="간단")
+        self.stream_mode="compact"
         self.stream_base="http://127.0.0.1:5000"
         self.frame_lock=threading.Lock()
         self.pending_frames={};self.raw_frames={};self.drawn_sizes={}
@@ -54,10 +54,10 @@ class Panel:
         ttk.Label(runbar,textvariable=self.opc_status,wraplength=1000).grid(row=2,column=0,columnspan=5,sticky="w")
         displaybar=ttk.Frame(root);displaybar.pack(fill="x",padx=8)
         ttk.Label(displaybar,text="영상 정보").pack(side="left")
-        displaybox=ttk.Combobox(displaybar,textvariable=self.display_mode,values=("작은 글씨","간단","상세","숨김"),state="readonly",width=9)
+        displaybox=ttk.Combobox(displaybar,textvariable=self.display_mode,values=("간단","상세","숨김"),state="readonly",width=7)
         displaybox.pack(side="left",padx=5)
         displaybox.bind("<<ComboboxSelected>>",self.change_display)
-        ttk.Label(displaybar,text="창 크기에 맞춰 영상 자동 확대 · 작은 글씨는 영상 위에 정보 표시").pack(side="left")
+        ttk.Label(displaybar,text="창 크기에 맞춰 영상 자동 확대 · 간단 모드는 영상 아래에 정보 표시").pack(side="left")
         self.task_status=tk.StringVar(value="")
         ttk.Label(displaybar,textvariable=self.task_status,foreground="#1766a0").pack(side="left",padx=12)
         grid=ttk.Frame(root);grid.pack(fill="both",expand=True,padx=8,pady=4)
@@ -73,6 +73,9 @@ class Panel:
             row=ttk.Frame(box);row.pack(fill="x",pady=3)
             ttk.Button(row,text="카메라 복구",command=lambda n=i:self.post(n,"recover",{})).pack(side="left")
             ttk.Button(row,text="영상 설정",command=lambda n=i:self.open_settings(n)).pack(side="left",padx=3)
+            ttk.Button(row,text="검사영역 설정",command=lambda n=i:self.open_roi(n)).pack(side="left",padx=3)
+            if i == 3:
+                ttk.Button(row,text="시트 색상 유무 설정",command=self.open_v3_color_presence).pack(side="left",padx=3)
             ttk.Label(row,text="선택 번호").pack(side="left",padx=(8,2))
             variable=tk.StringVar(value="")
             selector=ttk.Combobox(row,textvariable=variable,width=5,state="readonly")
@@ -237,6 +240,172 @@ class Panel:
         self.run_job("설정 읽기",lambda:self.http(url),
                      lambda current:self.settings_window(station_id,current,url))
 
+    def open_roi(self,station_id):
+        endpoint=self.url(f"/api/roi/{station_id}")
+        snapshot=self.url(f"/snapshot/vision{station_id}.jpg?info=raw")
+        def load():
+            current=self.http(endpoint)
+            response=requests.get(snapshot,timeout=5);response.raise_for_status()
+            with Image.open(io.BytesIO(response.content)) as decoded:frame=decoded.convert("RGB")
+            return current,frame
+        self.run_job("검사영역 읽기",load,
+                     lambda result:self.roi_window(station_id,result[1],result[0],endpoint))
+
+    def roi_window(self,station_id,frame,current,endpoint):
+        if station_id == 3:
+            return self.v3_object_roi_window(frame,current,endpoint)
+        window=tk.Toplevel(self.root);window.title(f"비전{station_id} 컨베이어 검사영역")
+        window.transient(self.root);window.grab_set()
+        image=frame.copy();image.thumbnail((850,600),Image.Resampling.LANCZOS)
+        width,height=image.size
+        photo=ImageTk.PhotoImage(image);window.roi_photo=photo
+        canvas=tk.Canvas(window,width=width,height=height,cursor="cross",highlightthickness=0)
+        canvas.pack(padx=10,pady=10);canvas.create_image(0,0,anchor="nw",image=photo)
+        roi=list(current.get("roi",[0.0,0.0,1.0,1.0]))
+        saved_polygon=current.get("polygon")
+        initial_points=([[float(x)*width,float(y)*height] for x,y in saved_polygon]
+                        if isinstance(saved_polygon,list) and len(saved_polygon)>=3 else [])
+        selection={"start":None,"coords":[roi[0]*width,roi[1]*height,roi[2]*width,roi[3]*height],
+                   "points":initial_points}
+        mode=tk.StringVar(value="polygon" if initial_points else "rectangle")
+
+        def redraw():
+            canvas.delete("roi_shape")
+            if mode.get()=="rectangle":
+                canvas.create_rectangle(*selection["coords"],outline="#00ffff",width=3,tags="roi_shape")
+            else:
+                points=selection["points"]
+                if len(points)>=2:
+                    flat=[value for point in points for value in point]
+                    canvas.create_line(*flat,fill="#00ffff",width=3,tags="roi_shape")
+                if len(points)>=3:
+                    flat=[value for point in points for value in point]
+                    canvas.create_polygon(*flat,outline="#00ffff",fill="",width=3,tags="roi_shape")
+                for index,(x,y) in enumerate(points,1):
+                    canvas.create_oval(x-5,y-5,x+5,y+5,fill="#ffff00",outline="#003333",tags="roi_shape")
+                    canvas.create_text(x+9,y-9,text=str(index),fill="#ffff00",anchor="sw",tags="roi_shape")
+        redraw()
+
+        def press(event):
+            x,y=max(0,min(width,event.x)),max(0,min(height,event.y))
+            if mode.get()=="polygon":
+                if len(selection["points"])<20:
+                    selection["points"].append([x,y]);redraw()
+            else:
+                selection["start"]=(x,y)
+        def drag(event):
+            if mode.get()!="rectangle" or selection["start"] is None:return
+            x,y=max(0,min(width,event.x)),max(0,min(height,event.y))
+            selection["coords"]=[selection["start"][0],selection["start"][1],x,y];redraw()
+        def release(event):
+            drag(event);selection["start"]=None
+        canvas.bind("<ButtonPress-1>",press);canvas.bind("<B1-Motion>",drag);canvas.bind("<ButtonRelease-1>",release)
+
+        controls=ttk.Frame(window,padding=(10,0,10,10));controls.pack(fill="x")
+        ttk.Label(controls,text="사각형은 마우스로 드래그하고, 다각형은 꼭짓점을 차례대로 클릭하세요. 마지막 점은 자동으로 첫 점과 연결됩니다.").pack(anchor="w")
+        mode_row=ttk.Frame(controls);mode_row.pack(fill="x",pady=(6,0))
+        ttk.Radiobutton(mode_row,text="사각형 드래그",variable=mode,value="rectangle",command=redraw).pack(side="left")
+        ttk.Radiobutton(mode_row,text="다각형 점 찍기",variable=mode,value="polygon",command=redraw).pack(side="left",padx=12)
+
+        def undo_point():
+            if selection["points"]:selection["points"].pop();redraw()
+        def clear_points():selection["points"].clear();redraw()
+        ttk.Button(mode_row,text="마지막 점 취소",command=undo_point).pack(side="left",padx=4)
+        ttk.Button(mode_row,text="점 전체 삭제",command=clear_points).pack(side="left",padx=4)
+        row=ttk.Frame(controls);row.pack(fill="x",pady=6)
+        ttk.Label(row,text="최소 겹침 비율").pack(side="left")
+        overlap=tk.DoubleVar(value=float(current.get("min_overlap",0.70)))
+        ttk.Spinbox(row,textvariable=overlap,from_=0.10,to=1.00,increment=0.05,width=6).pack(side="left",padx=5)
+
+        def full_frame():
+            mode.set("rectangle");selection["coords"]=[0,0,width,height];redraw()
+        def save():
+            if mode.get()=="polygon":
+                if len(selection["points"])<3:
+                    return messagebox.showerror("검사영역 오류","다각형은 점을 3개 이상 찍어야 합니다.",parent=window)
+                payload={"polygon":[[x/width,y/height] for x,y in selection["points"]],
+                         "min_overlap":overlap.get()}
+            else:
+                x1,y1,x2,y2=selection["coords"];x1,x2=sorted((x1,x2));y1,y2=sorted((y1,y2))
+                payload={"roi":[x1/width,y1/height,x2/width,y2/height],"min_overlap":overlap.get()}
+            def done(_):
+                if window.winfo_exists():window.destroy()
+                messagebox.showinfo("검사영역 저장 완료",f"비전{station_id}은 이제 지정한 컨베이어 영역 안의 부품만 판정합니다.")
+            self.run_job("검사영역 저장",lambda:self.http(endpoint,payload,8),done,
+                         lambda exc:messagebox.showerror("검사영역 저장 실패",str(exc),parent=window))
+        ttk.Button(row,text="전체 화면",command=full_frame).pack(side="left",padx=8)
+        ttk.Button(row,text="저장",command=save).pack(side="right",padx=4)
+        ttk.Button(row,text="취소",command=window.destroy).pack(side="right",padx=4)
+
+    def v3_object_roi_window(self,frame,current,endpoint):
+        window=tk.Toplevel(self.root);window.title("비전3 객체별 다각형 ROI")
+        window.transient(self.root);window.grab_set()
+        image=frame.copy();image.thumbnail((900,650),Image.Resampling.LANCZOS)
+        width,height=image.size;photo=ImageTk.PhotoImage(image);window.roi_photo=photo
+        canvas=tk.Canvas(window,width=width,height=height,cursor="cross",highlightthickness=0)
+        canvas.pack(padx=10,pady=10);canvas.create_image(0,0,anchor="nw",image=photo)
+        saved=current.get("object_rois") or {}
+        points={key:[[float(x)*width,float(y)*height] for x,y in ((saved.get(key) or {}).get("polygon") or [])]
+                for key in ("seat1","seat2","led")}
+        labels={"seat1":"시트1","seat2":"시트2","led":"LED"}
+        colors={"seat1":"#ffff00","seat2":"#ff9900","led":"#ff00ff"}
+        selected=tk.StringVar(value="seat1")
+
+        def redraw():
+            canvas.delete("object_roi")
+            for key,vertices in points.items():
+                color=colors[key]
+                if len(vertices)>=2:canvas.create_line(*[v for p in vertices for v in p],fill=color,width=3,tags="object_roi")
+                if len(vertices)>=3:canvas.create_polygon(*[v for p in vertices for v in p],outline=color,fill="",width=3,tags="object_roi")
+                for index,(x,y) in enumerate(vertices,1):
+                    canvas.create_oval(x-4,y-4,x+4,y+4,fill=color,outline="#222",tags="object_roi")
+                    canvas.create_text(x+7,y-7,text=f"{labels[key]} {index}",fill=color,anchor="sw",tags="object_roi")
+        redraw()
+        def click(event):
+            key=selected.get()
+            if len(points[key])<20:
+                points[key].append([max(0,min(width,event.x)),max(0,min(height,event.y))]);redraw()
+        canvas.bind("<Button-1>",click)
+        controls=ttk.Frame(window,padding=(10,0,10,10));controls.pack(fill="x")
+        ttk.Label(controls,text="대상을 선택한 뒤 실제 부품 방향을 따라 꼭짓점을 순서대로 클릭하세요. 각 ROI는 3점 이상이어야 합니다.").pack(anchor="w")
+        row=ttk.Frame(controls);row.pack(fill="x",pady=6)
+        for key in ("seat1","seat2","led"):
+            ttk.Radiobutton(row,text=labels[key],variable=selected,value=key).pack(side="left",padx=5)
+        def undo():
+            key=selected.get()
+            if points[key]:points[key].pop();redraw()
+        def clear():points[selected.get()].clear();redraw()
+        def clear_all():
+            if messagebox.askyesno("전체 ROI 삭제","시트1·시트2·LED ROI를 모두 지울까요?",parent=window):
+                for value in points.values():value.clear()
+                redraw()
+        ttk.Button(row,text="선택 ROI 마지막 점 취소",command=undo).pack(side="left",padx=8)
+        ttk.Button(row,text="선택 ROI 삭제",command=clear).pack(side="left",padx=4)
+        ttk.Button(row,text="전체 ROI 삭제",command=clear_all).pack(side="left",padx=4)
+        ttk.Label(row,text="최소 겹침").pack(side="left",padx=(12,2))
+        overlap=tk.DoubleVar(value=float(current.get("object_min_overlap",0.25)))
+        ttk.Spinbox(row,textvariable=overlap,from_=0.05,to=1.0,increment=.05,width=6).pack(side="left")
+        show_rois=tk.BooleanVar(value=bool(current.get("show_object_rois",False)))
+        ttk.Checkbutton(controls,text="일반 검사 화면에 ROI 외곽선 표시",variable=show_rois).pack(anchor="w",pady=(0,6))
+        def save():
+            invalid=[labels[key] for key,value in points.items() if 0<len(value)<3]
+            if invalid:return messagebox.showerror("ROI 설정 오류",f"{', '.join(invalid)} ROI는 완전히 삭제하거나 점을 3개 이상 지정하세요.",parent=window)
+            missing=[labels[key] for key,value in points.items() if not value]
+            if missing and not messagebox.askyesno("미설정 ROI 확인",
+                    f"{', '.join(missing)} ROI가 비어 있습니다. 해당 검사는 정상 판정할 수 없습니다. 그대로 저장할까요?",parent=window):return
+            payload={"polygon":[[0,0],[1,0],[1,1],[0,1]],
+                     "min_overlap":current.get("min_overlap",.70),
+                     "object_rois":{key:{"polygon":[[x/width,y/height] for x,y in value]}
+                                    for key,value in points.items() if value},
+                     "object_min_overlap":overlap.get(),"show_object_rois":show_rois.get()}
+            def done(_):
+                if window.winfo_exists():window.destroy()
+                messagebox.showinfo("저장 완료","비전3 ROI 편집 내용을 저장했습니다. 기존 전체 ROI는 전체 화면으로 초기화되었습니다.")
+            self.run_job("비전3 ROI 저장",lambda:self.http(endpoint,payload,8),done,
+                         lambda exc:messagebox.showerror("저장 실패",str(exc),parent=window))
+        ttk.Button(row,text="저장",command=save).pack(side="right",padx=4)
+        ttk.Button(row,text="취소",command=window.destroy).pack(side="right",padx=4)
+
     def settings_window(self,station_id,current,url):
         window=tk.Toplevel(self.root);window.title(f"비전{station_id} 카메라 영상 설정")
         window.transient(self.root);window.grab_set();window.resizable(False,False)
@@ -284,10 +453,101 @@ class Panel:
             if self.run_job("설정 저장",lambda:self.http(url,payload,8),saved,failed):
                 save_button.configure(state="disabled")
 
-        buttons=ttk.Frame(frame);buttons.grid(row=start+4,column=0,columnspan=2,pady=(10,0))
+        next_row=start+4
+        if station_id in (2,4):
+            ttk.Separator(frame,orient="horizontal").grid(row=next_row,column=0,columnspan=2,sticky="ew",pady=8)
+            next_row+=1
+            ttk.Label(frame,text="시트 색상 보정 (화면에 해당 시트 1개만 놓고 저장)").grid(
+                row=next_row,column=0,columnspan=2,sticky="w")
+            next_row+=1
+
+            def calibrate(color):
+                name="COCOA" if color=="cocoa" else "DARK"
+                if not messagebox.askokcancel("색상 기준 저장",f"비전{station_id} 화면에 {name} 시트 1개만 있습니까?",parent=window):
+                    return
+                endpoint=self.url(f"/api/camera/{station_id}/calibrate-seat/{color}")
+                def done(result):
+                    readiness=("COCOA/DARK 모두 저장됨: 색상 분류 가능"
+                               if result.get("ready") else "반대 색상 기준도 저장해야 분류가 시작됩니다.")
+                    messagebox.showinfo("기준색 저장 완료",
+                        f"{name} LAB 기준값: {result.get('lab')}\n\n{readiness}",parent=window)
+                self.run_job("색상 기준 저장",lambda:self.http(endpoint,{},8),done,
+                             lambda exc:messagebox.showerror("색상 보정 실패",str(exc),parent=window))
+
+            calibration_buttons=ttk.Frame(frame)
+            calibration_buttons.grid(row=next_row,column=0,columnspan=2,pady=5)
+            ttk.Button(calibration_buttons,text="COCOA 기준 저장",command=lambda:calibrate("cocoa")).pack(side="left",padx=4)
+            ttk.Button(calibration_buttons,text="DARK 기준 저장",command=lambda:calibrate("dark")).pack(side="left",padx=4)
+            next_row+=1
+            ttk.Label(frame,text="정확한 색 판정을 위해 자동 노출·자동 화이트밸런스를 끄세요.",foreground="#a05000").grid(
+                row=next_row,column=0,columnspan=2,sticky="w")
+            next_row+=1
+
+        buttons=ttk.Frame(frame);buttons.grid(row=next_row,column=0,columnspan=2,pady=(10,0))
         save_button=ttk.Button(buttons,text="적용 및 저장",command=apply_and_save)
         save_button.pack(side="left",padx=4)
         ttk.Button(buttons,text="취소",command=window.destroy).pack(side="left",padx=4)
+
+    def open_v3_color_presence(self):
+        endpoint=self.url("/api/vision3/color-presence")
+        self.run_job("비전3 색상 설정 읽기",lambda:self.http(endpoint,timeout=5),self.v3_color_presence_window)
+
+    def v3_color_presence_window(self,current):
+        """비전3의 좌우 시트 ROI를 색상 픽셀 비율로 판정하는 설정창입니다."""
+        window=tk.Toplevel(self.root);window.title("비전3 시트 색상 유무 설정")
+        window.transient(self.root);window.grab_set();window.resizable(False,False)
+        frame=ttk.Frame(window,padding=12);frame.pack(fill="both",expand=True)
+        settings=current.get("settings",{})
+        fields={
+            "seat1_min_ratio":("시트1 최소 색상 픽셀 비율(%)",1,95,float(settings.get("seat1_min_ratio",.20))*100),
+            "seat2_min_ratio":("시트2 최소 색상 픽셀 비율(%)",1,95,float(settings.get("seat2_min_ratio",.20))*100),
+            "color_tolerance":("색상 허용 범위",5,100,settings.get("color_tolerance",35)),
+            "lightness_weight":("밝기 영향도(%)",0,100,float(settings.get("lightness_weight",.35))*100),
+            "gray_margin":("회색 분리 여유",0,50,settings.get("gray_margin",4)),
+        }
+        variables={}
+        for row,(key,(label,minimum,maximum,value)) in enumerate(fields.items()):
+            ttk.Label(frame,text=label).grid(row=row,column=0,sticky="w",pady=3)
+            variable=tk.StringVar(value=f"{float(value):.1f}")
+            ttk.Spinbox(frame,textvariable=variable,from_=minimum,to=maximum,increment=1,width=10).grid(row=row,column=1,padx=8)
+            variables[key]=variable
+        row=len(fields)
+        ttk.Label(frame,text="허용 범위를 높이면 조명 변화에 강해지고, 너무 높으면 회색 지그도 시트로 볼 수 있습니다.",foreground="#8a5200").grid(row=row,column=0,columnspan=3,sticky="w",pady=(8,3));row+=1
+        ttk.Label(frame,text="밝기 영향도를 낮추면 밝기·그림자 변화의 영향을 덜 받습니다.",foreground="#555").grid(row=row,column=0,columnspan=3,sticky="w");row+=1
+        ttk.Separator(frame,orient="horizontal").grid(row=row,column=0,columnspan=3,sticky="ew",pady=9);row+=1
+        selected=tk.StringVar(value="seat1")
+        ttk.Label(frame,text="보정할 검사영역").grid(row=row,column=0,sticky="w")
+        ttk.Combobox(frame,textvariable=selected,values=("seat1","seat2"),state="readonly",width=10).grid(row=row,column=1,sticky="w");row+=1
+        status=tk.StringVar(value="각 ROI에 시트를 놓아 COCOA/DARK를 저장하고, 비운 뒤 회색 지그를 저장하세요.")
+        ttk.Label(frame,textvariable=status,wraplength=580).grid(row=row,column=0,columnspan=3,sticky="w",pady=6);row+=1
+
+        def calibrate(kind):
+            key=selected.get();names={"cocoa":"COCOA 시트","dark":"DARK 시트","gray":"빈 회색 지그"}
+            if not messagebox.askokcancel("기준 저장",f"{key} ROI에 {names[kind]} 상태가 맞습니까?",parent=window):return
+            endpoint=self.url(f"/api/vision3/color-presence/calibrate/{key}/{kind}")
+            def done(result):
+                status.set(f"{key} {names[kind]} 저장 완료: LAB {result.get('lab')} / 3종 완료: {'예' if result.get('ready') else '아니오'}")
+            self.run_job("색상 기준 저장",lambda:self.http(endpoint,{},8),done,
+                          lambda exc:messagebox.showerror("기준 저장 실패",str(exc),parent=window))
+        buttons=ttk.Frame(frame);buttons.grid(row=row,column=0,columnspan=3,pady=5);row+=1
+        ttk.Button(buttons,text="COCOA 저장",command=lambda:calibrate("cocoa")).pack(side="left",padx=3)
+        ttk.Button(buttons,text="DARK 저장",command=lambda:calibrate("dark")).pack(side="left",padx=3)
+        ttk.Button(buttons,text="빈 회색 지그 저장",command=lambda:calibrate("gray")).pack(side="left",padx=3)
+
+        def save():
+            try:
+                payload={key:float(var.get()) for key,var in variables.items()}
+                payload["seat1_min_ratio"]/=100;payload["seat2_min_ratio"]/=100;payload["lightness_weight"]/=100
+            except ValueError:return messagebox.showerror("입력 확인","숫자만 입력하세요.",parent=window)
+            endpoint=self.url("/api/vision3/color-presence/settings")
+            def done(_):
+                messagebox.showinfo("저장 완료","색상 픽셀 비율 설정을 저장했습니다. 프로그램을 재시작해도 유지됩니다.",parent=window)
+                window.destroy()
+            self.run_job("색상 설정 저장",lambda:self.http(endpoint,payload,8),done,
+                          lambda exc:messagebox.showerror("설정 저장 실패",str(exc),parent=window))
+        footer=ttk.Frame(frame);footer.grid(row=row,column=0,columnspan=3,pady=(10,0))
+        ttk.Button(footer,text="설정 저장",command=save).pack(side="left",padx=4)
+        ttk.Button(footer,text="닫기",command=window.destroy).pack(side="left",padx=4)
 
     @staticmethod
     def fetch_devices(base):
@@ -365,7 +625,7 @@ class Panel:
             self.status_vars[i].set(f"카메라 {c.get('status','-')} 번호 {c.get('index','-')} | 주문 {v.get('product','-')} | {v.get('status','-')} {v.get('outcome','-')} | {v.get('detail') or c.get('error') or ''}")
 
     def change_display(self,event=None):
-        self.stream_mode={"작은 글씨":"small","간단":"compact","상세":"detail","숨김":"none"}[self.display_mode.get()]
+        self.stream_mode={"간단":"compact","상세":"detail","숨김":"none"}[self.display_mode.get()]
         with self.frame_lock:self.pending_frames.clear()
         self.raw_frames.clear();self.drawn_sizes.clear()
 
