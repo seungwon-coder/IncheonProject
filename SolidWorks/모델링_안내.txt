@@ -1,0 +1,10 @@
+SolidWorks 전체 설비 조립 모델
+
+공개 GitHub: https://github.com/seungwon-coder/IncheonProject/tree/main/SolidWorks
+최상위 조립 파일: 공정구상도_수정중.SLDASM
+
+본인이 전체 설비 조립 모델을 구성했습니다. 개별 부품에는 제조사 제공 및 참조 모델이 포함될 수 있으므로 전체 조립·배치 설계와 개별 부품 제작을 구분합니다.
+
+파일 275개. OldVer 62개와 잠금 임시 파일을 제외하고 원본 이름·폴더 구조를 유지했습니다. ZIP을 전체 압축 해제한 뒤 최상위 조립 파일을 여세요. GitHub에서 받을 때는 Git LFS가 필요합니다.
+
+SolidWorks 파일의 외부 참조·정상 재생성·간섭 검증은 별도 필요합니다. 폴더 밖 파일에 대한 참조가 남아 있는지는 SolidWorks에서 확인해야 합니다. PDF에는 원본 교육용 표시를 유지했습니다.
