@@ -1,0 +1,464 @@
+{
+  "schema_version": 1,
+  "robots": {
+    "Dobot_1": {
+      "ready": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "pickup_approach": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "pickup": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "assembly_1_approach": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "assembly_1": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      }
+    },
+    "Dobot_2": {
+      "ready": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "safe_point": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "pickup_approach": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "pickup": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "assembly_1_approach": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "assembly_1_approach2": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "assembly_1": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "assembly_2_approach": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "assembly_2": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      }
+    },
+    "Dobot_3": {
+      "ready": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "pickup_approach_1": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "pickup_approach_2": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "pickup": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "assembly_1_approach": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "assembly_1": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      }
+    },
+    "Dobot_4": {
+      "ready": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "base_pickup_approach": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "base_pickup": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "jig_pickup_approach": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "jig_pickup": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "storage_base_1st_approach": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "storage_base_1st": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "storage_base_2nd_approach": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "storage_base_2nd": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "storage_base_3rd_approach": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "storage_base_3rd": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "main_conveyor_approach": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "main_conveyor": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "return_Lamp_a_approach": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "return_Lamp_a": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "return_Lamp_b_approach": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "return_Lamp_b": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "return_Seat_a_approach": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "return_Seat_a": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "return_Seat_b_approach": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      },
+      "return_Seat_b": {
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "r": 0.0
+        },
+        "speed_percent": 5.0,
+        "updated_at": null,
+        "valid": false
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Runtime logs and temporary document previews
+logs/
+*.log
+.docx_review/
+.codex-finalizer/
+.codex-ppt-build/
+portfolio_output/
+.tools/
+tmp/
+
+# Local credentials
+.env
+.env.*
+!.env.example
+
+# Editor and OS temporary files
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
