@@ -1,0 +1,13 @@
+config.json
+mysql-client.ini
+scada-client.ini
+scada-source.json
+scada-sync-status.json
+heartbeat.json
+*.log
+*.log.*
+*.pid
+*.sqlite3
+*.lock
+__pycache__/
+reports/

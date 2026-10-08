@@ -1,0 +1,15 @@
+USE `opcua-manufacturing`;
+INSERT IGNORE INTO mes_inventory (item_id,label,quantity,capacity,updated_at,run_mode) VALUES ('BODY','바디 공급창고',0,8,UTC_TIMESTAMP(6),'TEST');
+INSERT IGNORE INTO mes_inventory (item_id,label,quantity,capacity,updated_at,run_mode) VALUES ('CHASSIS','샤시 공급창고',0,3,UTC_TIMESTAMP(6),'TEST');
+INSERT IGNORE INTO mes_inventory (item_id,label,quantity,capacity,updated_at,run_mode) VALUES ('LAMP_ROUND','라운드 램프',0,4,UTC_TIMESTAMP(6),'TEST');
+INSERT IGNORE INTO mes_inventory (item_id,label,quantity,capacity,updated_at,run_mode) VALUES ('LAMP_ANGULAR','각진 램프',0,5,UTC_TIMESTAMP(6),'TEST');
+INSERT IGNORE INTO mes_inventory (item_id,label,quantity,capacity,updated_at,run_mode) VALUES ('SEAT_COCOA','cocoabrown 시트',0,8,UTC_TIMESTAMP(6),'TEST');
+INSERT IGNORE INTO mes_inventory (item_id,label,quantity,capacity,updated_at,run_mode) VALUES ('SEAT_DARK','darkbrown 시트',0,8,UTC_TIMESTAMP(6),'TEST');
+INSERT IGNORE INTO mes_inventory (item_id,label,quantity,capacity,updated_at,run_mode) VALUES ('FINISHED','완료창고',0,6,UTC_TIMESTAMP(6),'TEST');
+INSERT IGNORE INTO mes_inventory (item_id,label,quantity,capacity,updated_at,run_mode) VALUES ('BODY','바디 공급창고',0,8,UTC_TIMESTAMP(6),'PRODUCTION');
+INSERT IGNORE INTO mes_inventory (item_id,label,quantity,capacity,updated_at,run_mode) VALUES ('CHASSIS','샤시 공급창고',0,3,UTC_TIMESTAMP(6),'PRODUCTION');
+INSERT IGNORE INTO mes_inventory (item_id,label,quantity,capacity,updated_at,run_mode) VALUES ('LAMP_ROUND','라운드 램프',0,4,UTC_TIMESTAMP(6),'PRODUCTION');
+INSERT IGNORE INTO mes_inventory (item_id,label,quantity,capacity,updated_at,run_mode) VALUES ('LAMP_ANGULAR','각진 램프',0,5,UTC_TIMESTAMP(6),'PRODUCTION');
+INSERT IGNORE INTO mes_inventory (item_id,label,quantity,capacity,updated_at,run_mode) VALUES ('SEAT_COCOA','cocoabrown 시트',0,8,UTC_TIMESTAMP(6),'PRODUCTION');
+INSERT IGNORE INTO mes_inventory (item_id,label,quantity,capacity,updated_at,run_mode) VALUES ('SEAT_DARK','darkbrown 시트',0,8,UTC_TIMESTAMP(6),'PRODUCTION');
+INSERT IGNORE INTO mes_inventory (item_id,label,quantity,capacity,updated_at,run_mode) VALUES ('FINISHED','완료창고',0,6,UTC_TIMESTAMP(6),'PRODUCTION');

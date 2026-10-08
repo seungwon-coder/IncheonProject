@@ -1,0 +1,26 @@
+{
+  "endpoint": "opc.tcp://127.0.0.1:49320",
+  "root_node": "ns=2;s=M.PLC.ROBOT_I/O",
+  "sources": [
+    {
+      "root_node": "ns=2;s=M.PLC.ROBOT_I/O",
+      "table": "team2-robotdb"
+    },
+    {
+      "root_node": "ns=2;s=M.PLC.VISION_I/O",
+      "table": "team2-vision"
+    },
+    {
+      "root_node": "ns=2;s=M.PLC.ORDER",
+      "table": "team2-order"
+    },
+    {
+      "root_node": "ns=2;s=M.PLC.LINE",
+      "table": "team2-plcstatus"
+    }
+  ],
+  "publish_ms": 250,
+  "mysql_exe": "C:/Program Files/MySQL/MySQL Server 8.4/bin/mysql.exe",
+  "mysql_options_file": "mysql-client.ini",
+  "spool": "spool.sqlite3"
+}

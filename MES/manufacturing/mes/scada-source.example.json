@@ -1,0 +1,13 @@
+{
+  "enabled": false,
+  "source_name": "smart_factory",
+  "host": "127.0.0.1",
+  "port": 3306,
+  "database": "smart_factory",
+  "table": "orders",
+  "source_timezone": "Asia/Seoul",
+  "poll_seconds": 3,
+  "backlog_mode": "TEST",
+  "new_orders_mode": "MES_GUI",
+  "source_mysql_exe": "C:/Program Files/MySQL/MySQL Server 8.4/bin/mysql.exe"
+}
