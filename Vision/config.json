@@ -1,0 +1,128 @@
+{
+  "endpoint": "opc.tcp://127.0.0.1:49320",
+  "timeout_seconds": 10,
+  "max_frame_age": 2,
+  "stable_frames": 5,
+  "decision_confidence": 0.8,
+  "stations": [
+    {
+      "id": 1,
+      "inspection": "lamp",
+      "enabled": true,
+      "camera": 0,
+      "camera_path": "",
+      "model": "models/vision1_best.pt",
+      "focus": 100,
+      "exposure": -5,
+      "autofocus": false,
+      "auto_exposure": false,
+      "auto_white_balance": true,
+      "classes": {
+        "lamp_edge_01": "edge",
+        "lamp_round_02": "round",
+        "lamp_edge": "edge",
+        "lamp_round": "round"
+      },
+      "tags": {
+        "start": "ns=2;s=M.PLC.VISION_I/O.VISION1_START",
+        "running": "ns=2;s=M.PLC.VISION_I/O.VISION1_RUNNING",
+        "finish": "ns=2;s=M.PLC.VISION_I/O.VISION1_FINISH",
+        "ng": "ns=2;s=M.PLC.VISION_I/O.VISION1_NG",
+        "error": "ns=2;s=M.PLC.VISION_I/O.VISION1_ERROR",
+        "product": "ns=2;s=M.PLC.VISION_I/O.VISION1_PRODUCT"
+      },
+      "format": "MJPG",
+      "resolution": "640x480",
+      "fps": 15,
+      "backend": "DSHOW"
+    },
+    {
+      "id": 2,
+      "inspection": "seat",
+      "enabled": true,
+      "camera": 1,
+      "camera_path": "",
+      "model": "models/vision2_best.pt",
+      "focus": 100,
+      "exposure": -5,
+      "autofocus": false,
+      "auto_exposure": false,
+      "auto_white_balance": true,
+      "classes": {
+        "seat_color_01": "cocoa",
+        "seat_color_02": "dark",
+        "seat_cocoa": "cocoa",
+        "seat_dark_brown": "dark"
+      },
+      "tags": {
+        "start": "ns=2;s=M.PLC.VISION_I/O.VISION2_START",
+        "running": "ns=2;s=M.PLC.VISION_I/O.VISION2_RUNNING",
+        "finish": "ns=2;s=M.PLC.VISION_I/O.VISION2_FINISH",
+        "ng": "ns=2;s=M.PLC.VISION_I/O.VISION2_NG",
+        "error": "ns=2;s=M.PLC.VISION_I/O.VISION2_ERROR",
+        "product": "ns=2;s=M.PLC.VISION_I/O.VISION2_PRODUCT"
+      },
+      "format": "MJPG",
+      "resolution": "640x480",
+      "fps": 15,
+      "backend": "DSHOW"
+    },
+    {
+      "id": 3,
+      "inspection": "assembly",
+      "enabled": true,
+      "camera": 2,
+      "camera_path": "",
+      "model": "models/vision3_best.pt",
+      "focus": 100,
+      "exposure": -5,
+      "autofocus": false,
+      "auto_exposure": false,
+      "auto_white_balance": true,
+      "classes": {
+        "seat_color_01": "cocoa",
+        "seat_color_02": "dark",
+        "lamp_edge_01": "edge",
+        "lamp_round_02": "round"
+      },
+      "tags": {
+        "start": "ns=2;s=M.PLC.VISION_I/O.VISION3_START",
+        "running": "ns=2;s=M.PLC.VISION_I/O.VISION3_RUNNING",
+        "finish": "ns=2;s=M.PLC.VISION_I/O.VISION3_FINISH",
+        "ng": "ns=2;s=M.PLC.VISION_I/O.VISION3_NG",
+        "error": "ns=2;s=M.PLC.VISION_I/O.VISION3_ERROR",
+        "product": "ns=2;s=M.PLC.VISION_I/O.VISION3_PRODUCT"
+      },
+      "format": "MJPG",
+      "resolution": "640x480",
+      "fps": 15,
+      "backend": "DSHOW"
+    },
+    {
+      "id": 4,
+      "inspection": "sort",
+      "enabled": true,
+      "camera": 3,
+      "camera_path": "",
+      "model": "models/vision4_best.pt",
+      "focus": 100,
+      "exposure": -5,
+      "autofocus": false,
+      "auto_exposure": false,
+      "auto_white_balance": true,
+      "classes": {},
+      "tags": {
+        "start": "ns=2;s=M.PLC.VISION_I/O.VISION4_START",
+        "running": "ns=2;s=M.PLC.VISION_I/O.VISION4_RUNNING",
+        "finish": "ns=2;s=M.PLC.VISION_I/O.VISION4_FINISH",
+        "ng": "ns=2;s=M.PLC.VISION_I/O.VISION4_NG",
+        "error": "ns=2;s=M.PLC.VISION_I/O.VISION4_ERROR",
+        "result": "ns=2;s=M.PLC.VISION_I/O.VISION4_CLASS_RESULT"
+      },
+      "format": "MJPG",
+      "resolution": "640x480",
+      "fps": 15,
+      "backend": "DSHOW"
+    }
+  ]
+}
